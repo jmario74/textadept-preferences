@@ -1,3 +1,15 @@
+-- Import session on file open startup
+local function import_default_session()
+  textadept.session.load(_USERHOME..'/session')
+  for i = 1, #arg do
+    local filename = lfs.abspath(arg[i], arg[-1])
+    if lfs.attributes(filename) then -- not a switch
+      io.open_file(filename)
+    end
+  end
+end
+events.connect(events.VIEW_NEW,import_default_session)
+
 -- some local colors
 local white = 0xFFFFFF
 local light_black = 0x333333
@@ -41,8 +53,12 @@ events.connect(events.LEXER_LOADED, function(name)
   buffer.use_tabs = false
   buffer.tab_width = 4
 end)
+
+-- no scroll bars
 view.v_scroll_bar = false
 view.h_scroll_bar = false
+
+-- wrap indents
 view.wrap_indent_mode = view.WRAPINDENT_DEEPINDENT
 view.wrap_mode = view.WRAP_WORD
 --view.wrap_visual_flags = view.WRAPVISUALFLAG_START

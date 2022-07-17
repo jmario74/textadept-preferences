@@ -91,3 +91,23 @@ local function copy_file_path()
 	ui.clipboard_text = buffer.filename
 end
 keys['ctrl+alt+c'] = copy_file_path
+
+-- Duplicate line/selection
+local function dup()
+	--ui.print(buffer.line_from_position(buffer.selection_start) .. "/" .. buffer.line_from_position(buffer.selection_end))
+	if not buffer.selection_empty and buffer.line_from_position(buffer.selection_start) ~= buffer.line_from_position(buffer.selection_end) then
+		-- Just copy instead of duplicate so when ctrl+z is better behavior
+		--buffer.selection_duplicate()
+		buffer.copy()
+		-- Then unselect
+		--ui.print(buffer.current_pos)
+		buffer.set_empty_selection(buffer.current_pos)
+		-- Then move caret down
+		buffer.new_line()
+		-- Then paste it there
+		buffer.paste()
+	else
+		buffer.line_duplicate()
+	end
+end
+keys['ctrl+d'] = dup

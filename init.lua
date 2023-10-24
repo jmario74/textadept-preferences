@@ -43,7 +43,14 @@ events.connect(events.FIND_RESULT_FOUND, function()
 	view.element_color[view.ELEMENT_SELECTION_INACTIVE_TEXT] = orange
 end)
 
--- Custom find
+-- Custom find marker
+keys['ctrl+kp4'] = function()
+	ui.find.find_entry_text = '⌘'
+	ui.find.focus()
+	ui.find.find_next()
+	ui.find.find_prev()
+end
+
 keys['ctrl+f'] = function()
 	ui.find.find_entry_text = buffer.get_sel_text()
 	local str = buffer.get_text()
@@ -113,6 +120,9 @@ end)
 view.wrap_indent_mode = view.WRAPINDENT_DEEPINDENT
 view.wrap_mode = view.WRAP_WORD
 
+-- no typeover character ")"
+textadept.editing.typeover_chars[string.byte(')')] = false
+
 -- remove trailing spaces on save
 textadept.editing.strip_trailing_spaces = true
 
@@ -135,24 +145,25 @@ keys['ctrl+alt+c'] = copy_file_path
 
 -- Duplicate line/selection
 local function dup()
-	--ui.print(buffer.line_from_position(buffer.selection_start) .. "/" .. buffer.line_from_position(buffer.selection_end))
 	if not buffer.selection_empty and buffer.line_from_position(buffer.selection_start) ~= buffer.line_from_position(buffer.selection_end) then
 		-- get selected text for its length
 		local sel_text = buffer.get_sel_text()
-		-- Just insert instead of duplicate for custom behavior
-		--buffer.selection_duplicate()
+
 		-- Then unselect
 		buffer.set_empty_selection(buffer.current_pos)
+
 		-- Then move caret down
 		buffer.new_line()
+
 		-- add space in between
 		buffer.new_line()
-		-- Then insert text there
+
+		-- Then insert duplicate text
 		buffer.insert_text(buffer.current_pos,sel_text)
-		-- reposition to end of line above
-		buffer.goto_pos(buffer.current_pos - 2)
-		-- but undoes all inserted text ???
-		--buffer.goto_pos(buffer.current_pos + #sel_text)
+
+		-- reposition caret to end of line of inserted duplicate text
+		buffer.goto_pos(buffer.current_pos + #sel_text)
+
 		-- caret is at end of line, count backwards using length to reselect
 		buffer.set_selection(buffer.current_pos, buffer.current_pos - #sel_text)
 	else
@@ -165,9 +176,9 @@ keys['ctrl+d'] = dup
 local is_autoindent = false
 local function toggle_autoindent()
 	if not is_autoindent then
-		textadept.editing.auto_indent = false
-	else
 		textadept.editing.auto_indent = true
+	else
+		textadept.editing.auto_indent = false
 	end
 	is_autoindent = not is_autoindent
 end
@@ -242,16 +253,34 @@ keys['ctrl+f11'] = toggle_menubar
 -- no menubar on startup
 events.connect(events.INITIALIZED,toggle_menubar)
 
--- Toggle Tabs
-local is_tabs= false
+-- Toggle Tabs, default on
+local is_tabs = false
 local function toggle_tabs()
 	if not is_tabs then
-		ui.tabs = false
-	else
 		ui.tabs = true
+	else
+		ui.tabs = false
 	end
 	is_tabs = not is_tabs
 end
 keys['ctrl+f12'] = toggle_tabs
 -- no tabs on startup
 events.connect(events.VIEW_NEW,toggle_tabs)
+
+-- insert CSS marker
+local function cssmrk()
+	buffer.add_text('/* ⌘ */')
+end
+keys['ctrl+kp2'] = cssmrk
+
+-- insert comment marker
+local function cmrk()
+	buffer.add_text('// ⌘')
+end
+keys['ctrl+kp1'] = cmrk
+
+-- insert marker
+local function mrk()
+	buffer.add_text(' ⌘')
+end
+keys['ctrl+kp3'] = mrk

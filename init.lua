@@ -1,3 +1,5 @@
+-- ONLY WORKS WITH GTK VERSION 11.4
+
 -- When editor start by opening file in file manager import session & add opened file
 local function import_default_session()
 	textadept.session.load(_USERHOME..'/session')
@@ -8,7 +10,7 @@ local function import_default_session()
 		end
 	end
 end
-events.connect(events.VIEW_NEW,import_default_session)
+events.connect(events.INITIALIZED,import_default_session)
 
 -- Some local colors (/themes/dark.lua)
 local white = 0xFFFFFF
@@ -140,6 +142,7 @@ events.connect(events.UNFOCUS,unfocus_color)
 -- Copy file path to clipboard
 local function copy_file_path()
 	ui.clipboard_text = buffer.filename
+	statusbar_filename()
 end
 keys['ctrl+alt+c'] = copy_file_path
 
@@ -184,7 +187,7 @@ local function toggle_autoindent()
 end
 keys['ctrl+f7'] = toggle_autoindent
 -- No auto indent on startup
-events.connect(events.VIEW_NEW,toggle_autoindent)
+events.connect(events.INITIALIZED,toggle_autoindent)
 
 -- Toggle auto pairs
 local is_autopairs = false
@@ -199,7 +202,7 @@ local function toggle_autopairs()
 end
 keys['ctrl+f8'] = toggle_autopairs
 -- No auto pairs on startup
-events.connect(events.VIEW_NEW,toggle_autopairs)
+events.connect(events.INITIALIZED,toggle_autopairs)
 
 -- Toggle scrollbars
 local is_scrollbars = false
@@ -215,7 +218,7 @@ local function toggle_scrollbars()
 end
 keys['ctrl+f9'] = toggle_scrollbars
 -- Hide scrollbars on startup
-events.connect(events.VIEW_NEW,toggle_scrollbars)
+events.connect(events.INITIALIZED,toggle_scrollbars)
 
 -- Toggle line numbers
 local is_linenum = false
@@ -235,7 +238,7 @@ local function toggle_linenum()
 end
 keys['ctrl+f10'] = toggle_linenum
 -- Hide line numbers on startup
-events.connect(events.VIEW_NEW,toggle_linenum)
+events.connect(events.INITIALIZED,toggle_linenum)
 
 -- Toggle Menubar
 local is_menubar = false
@@ -265,7 +268,7 @@ local function toggle_tabs()
 end
 keys['ctrl+f12'] = toggle_tabs
 -- no tabs on startup
-events.connect(events.VIEW_NEW,toggle_tabs)
+events.connect(events.INITIALIZED,toggle_tabs)
 
 -- insert CSS marker
 local function cssmrk()

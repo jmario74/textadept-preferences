@@ -40,11 +40,6 @@ end
 events.connect(events.UPDATE_UI,statusbar_filename)
 events.connect(events.FILE_AFTER_SAVE,statusbar_filename)
 
--- color search result
-events.connect(events.FIND_RESULT_FOUND, function()
-	view.element_color[view.ELEMENT_SELECTION_INACTIVE_TEXT] = orange
-end)
-
 -- Custom find marker
 keys['ctrl+kp4'] = function()
 	ui.find.find_entry_text = '⌘'
@@ -130,14 +125,10 @@ textadept.editing.strip_trailing_spaces = true
 
 -- focus/unfocus color change
 local function focus_color()
-	view.sel_alpha = 20
+	view.sel_alpha = 30
+	view.element_color[view.ELEMENT_SELECTION_INACTIVE_BACK] = white | 0X20000000
 end
 events.connect(events.FOCUS,focus_color)
-local function unfocus_color()
-	view.sel_alpha = 90
-	view.reset_element_color(view.ELEMENT_SELECTION_INACTIVE_TEXT)
-end
-events.connect(events.UNFOCUS,unfocus_color)
 
 -- Copy file path to clipboard
 local function copy_file_path()

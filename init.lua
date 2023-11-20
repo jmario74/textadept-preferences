@@ -279,6 +279,17 @@ local function mrk()
 end
 keys['ctrl+kp3'] = mrk
 
+-- add block comment
+local function add_blok_commnt()
+	-- get selected text
+	local sel_text = buffer.get_sel_text()
+	-- add block comment
+	local new_text = '/*' .. sel_text .. '*/'
+	-- replace selected text
+	buffer.replace_sel(new_text)
+end
+keys['ctrl+kp5'] = add_blok_commnt
+
 -- thank you to Eric Anderson for his show & tell of this code
 -- show opening block in status bar, closing block must not have space before it
 function string.trim(str)

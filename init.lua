@@ -279,16 +279,27 @@ local function mrk()
 end
 keys['ctrl+kp3'] = mrk
 
--- add block comment
-local function add_blok_commnt()
+-- add/remove block comment
+local function is_blok_commnt()
 	-- get selected text
 	local sel_text = buffer.get_sel_text()
-	-- add block comment
-	local new_text = '/*' .. sel_text .. '*/'
-	-- replace selected text
-	buffer.replace_sel(new_text)
+	-- only if or not block comment
+	if string.find(sel_text, "/[*]") == nil and string.find(sel_text, "[*]/") == nil then
+		buffer.replace_sel('/*' .. sel_text .. '*/')
+	elseif string.find(sel_text, "/[*]") ~= nil and string.find(sel_text, "[*]/") ~= nil then
+		-- remove open
+		local opnBegIdx, opnEndIdx = string.find(sel_text, "/[*]")
+		local prfx1 = string.sub(sel_text, 1, opnBegIdx - 1)
+		local sufx1 = string.sub(sel_text, opnEndIdx + 1)
+		local blokStr = prfx1 .. sufx1
+		-- then remove close
+		local clsBegIdx, clsEndIdx = string.find(blokStr, "[*]/")
+		local prfx2 = string.sub(blokStr, 1, clsBegIdx - 1)
+		local sufx2 = string.sub(blokStr, clsEndIdx + 1)
+		buffer.replace_sel(prfx2 .. sufx2)
+	end
 end
-keys['ctrl+kp5'] = add_blok_commnt
+keys['ctrl+kp5'] = is_blok_commnt
 
 -- thank you to Eric Anderson for his show & tell of this code
 -- show opening block in status bar, closing block must not have space before it

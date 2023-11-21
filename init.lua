@@ -123,10 +123,12 @@ textadept.editing.typeover_chars[string.byte(')')] = false
 -- remove trailing spaces on save
 textadept.editing.strip_trailing_spaces = true
 
--- focus/unfocus color change
+-- color selection
 local function focus_color()
 	view.sel_alpha = 30
 	view.element_color[view.ELEMENT_SELECTION_INACTIVE_BACK] = white | 0X20000000
+	view.element_color[view.ELEMENT_SELECTION_ADDITIONAL_BACK] = white | 0X20000000
+	view.element_color[view.ELEMENT_SELECTION_SECONDARY_BACK] = white | 0X20000000
 end
 events.connect(events.FOCUS,focus_color)
 

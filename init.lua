@@ -76,6 +76,8 @@ local function setSelectnColor()
 end
 events.connect(events.FOCUS,setSelectnColor)
 events.connect(events.RESET_AFTER,setSelectnColor)
+events.connect(events.BUFFER_NEW, setSelectnColor)
+events.connect(events.FILE_OPENED, setSelectnColor)
 
 -- Launch maximized
 ui.maximized = true

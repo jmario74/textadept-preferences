@@ -1,16 +1,21 @@
 -- ONLY WORKS WITH GTK VERSION 11.4
 
--- When editor start by opening file in file manager import session & add opened file
-local function import_default_session()
-	textadept.session.load(_USERHOME..'/session')
-	for i = 1, #arg do
-		local filename = lfs.abspath(arg[i], arg[-1])
-		if lfs.attributes(filename) then -- not a switch
-			io.open_file(filename)
-		end
-	end
-end
-events.connect(events.INITIALIZED,import_default_session)
+--[[
+Custom find marker = ctrl+kp4
+Custom find = ctrl+f
+Copy file path to clipboard = ctrl+alt+c
+Duplicate line/selection = ctrl+d
+Toggle auto indent = ctrl+f7
+Toggle auto pairs = ctrl+f8
+Toggle scrollbars = ctrl+f9
+Toggle line numbers = ctrl+f10
+Toggle Menubar = ctrl+f11
+Toggle Tabs = ctrl+f12
+insert CSS marker = ctrl+kp2
+insert comment marker = ctrl+kp1
+insert marker = ctrl+kp3
+add/remove block comment = ctrl+kp5
+]]
 
 -- Some local colors (/themes/dark.lua)
 local white = 0xFFFFFF
@@ -25,7 +30,7 @@ local orange = 0x4D99E6
 
 -- Adjust the default theme's font and size.
 if not CURSES then
-  view:set_theme('dark', {font = 'DejaVu Sans Mono', size = 17})
+  view:set_theme('dark', {font = 'DejaVu Sans Mono', size = 13})
 end
 
 -- Display file path in status bar if OS is set to hide title bar of apps
@@ -48,6 +53,7 @@ keys['ctrl+kp4'] = function()
 	ui.find.find_prev()
 end
 
+-- custom find
 keys['ctrl+f'] = function()
 	ui.find.find_entry_text = buffer.get_sel_text()
 	local str = buffer.get_text()
@@ -60,6 +66,16 @@ end
 ui.find.highlight_all_matches = true
 view.indic_fore[ui.find.INDIC_FIND] = white
 view.indic_alpha[ui.find.INDIC_FIND] = 0
+
+-- color selection
+local function setSelectnColor()
+	view.sel_alpha = 30
+	view.element_color[view.ELEMENT_SELECTION_INACTIVE_BACK] = white | 0X20000000
+	view.element_color[view.ELEMENT_SELECTION_ADDITIONAL_BACK] = white | 0X20000000
+	view.element_color[view.ELEMENT_SELECTION_SECONDARY_BACK] = white | 0X20000000
+end
+events.connect(events.FOCUS,setSelectnColor)
+events.connect(events.RESET_AFTER,setSelectnColor)
 
 -- Launch maximized
 ui.maximized = true
@@ -88,7 +104,6 @@ lexer.styles.variable = {fore = teal}
 
 -- Highlighted selected word
 view.element_color[view.ELEMENT_SELECTION_BACK] = white
-view.sel_alpha = 20
 view.element_color[view.ELEMENT_CARET_LINE_BACK] = black
 view.element_color[view.ELEMENT_CARET_ADDITIONAL] = black
 
@@ -98,7 +113,7 @@ view.caret_line_back = light_black
 view.caret_line_frame = 2
 view.element_color[view.ELEMENT_CARET_ADDITIONAL] = orange
 
--- Bracket match
+-- Bracket match, removed in version 12.2
 view.indic_fore[textadept.editing.INDIC_BRACEMATCH] = white
 
 -- Default indentation settings for all buffers.
@@ -123,15 +138,6 @@ textadept.editing.typeover_chars[string.byte(')')] = false
 -- remove trailing spaces on save
 textadept.editing.strip_trailing_spaces = true
 
--- color selection
-local function focus_color()
-	view.sel_alpha = 30
-	view.element_color[view.ELEMENT_SELECTION_INACTIVE_BACK] = white | 0X20000000
-	view.element_color[view.ELEMENT_SELECTION_ADDITIONAL_BACK] = white | 0X20000000
-	view.element_color[view.ELEMENT_SELECTION_SECONDARY_BACK] = white | 0X20000000
-end
-events.connect(events.FOCUS,focus_color)
-
 -- Copy file path to clipboard
 local function copy_file_path()
 	ui.clipboard_text = buffer.filename
@@ -141,9 +147,13 @@ keys['ctrl+alt+c'] = copy_file_path
 
 -- Duplicate line/selection
 local function dup()
+	--ui.print(buffer.line_from_position(buffer.selection_start) .. "/" .. buffer.line_from_position(buffer.selection_end))
 	if not buffer.selection_empty and buffer.line_from_position(buffer.selection_start) ~= buffer.line_from_position(buffer.selection_end) then
 		-- get selected text for its length
 		local sel_text = buffer.get_sel_text()
+
+		-- Just insert instead of duplicate for custom behavior
+		--buffer.selection_duplicate()
 
 		-- Then unselect
 		buffer.set_empty_selection(buffer.current_pos)
@@ -152,7 +162,7 @@ local function dup()
 		buffer.new_line()
 
 		-- add space in between
-		buffer.new_line()
+		--buffer.new_line()
 
 		-- Then insert duplicate text
 		buffer.insert_text(buffer.current_pos,sel_text)
@@ -161,7 +171,7 @@ local function dup()
 		buffer.goto_pos(buffer.current_pos + #sel_text)
 
 		-- caret is at end of line, count backwards using length to reselect
-		buffer.set_selection(buffer.current_pos, buffer.current_pos - #sel_text)
+		buffer.set_selection(buffer.current_pos, buffer.current_pos - string.len(sel_text))
 	else
 		buffer.line_duplicate()
 	end
@@ -213,25 +223,53 @@ keys['ctrl+f9'] = toggle_scrollbars
 -- Hide scrollbars on startup
 events.connect(events.INITIALIZED,toggle_scrollbars)
 
--- Toggle line numbers
+--[[ Toggle all margin width for all tabs
 local is_linenum = false
-local function toggle_linenum()
+local mWdtArr = {}
+function toggle_linenum()
 	if not is_linenum then
 		for i = 1, view.margins do
-			if view.margin_width_n[i] > 0 then
-				view.margin_width_n[i] = 0
-				view.margins = 0
-			end
+			mWdtArr[i] = view.margin_width_n[i]
+			view.margin_width_n[i] = 0
 		end
+		-- apply to all tabs
+		view.margins = 0
 	else
+		-- apply to all tabs, requires "reset()", all edit history will be lost
 		view.margins = 5
+
+		for i = 1, view.margins do
+			view.margin_width_n[i] = mWdtArr[i]
+		end
+
 		reset()
 	end
 	is_linenum = not is_linenum
 end
 keys['ctrl+f10'] = toggle_linenum
--- Hide line numbers on startup
-events.connect(events.INITIALIZED,toggle_linenum)
+-- no line numbers on startup, "events.INITIALIZED" neutralizes key bind
+events.connect(events.BUFFER_NEW, toggle_linenum)
+events.connect(events.FILE_OPENED, toggle_linenum)
+]]
+
+-- Toggle line numbers only for this tab
+local is_linenum = false
+local mWdtArr = {}
+function toggle_linenum()
+	if not is_linenum then
+		for i = 1, view.margins do
+			mWdtArr[i] = view.margin_width_n[i]
+		end
+		view.margin_width_n[1] = 0
+	else
+		view.margin_width_n[1] = mWdtArr[1]
+	end
+	is_linenum = not is_linenum
+end
+keys['ctrl+f10'] = toggle_linenum
+-- no line numbers on startup, "events.INITIALIZED" neutralizes key bind
+events.connect(events.BUFFER_NEW, toggle_linenum)
+events.connect(events.FILE_OPENED, toggle_linenum)
 
 -- Toggle Menubar
 local is_menubar = false
@@ -249,19 +287,19 @@ keys['ctrl+f11'] = toggle_menubar
 -- no menubar on startup
 events.connect(events.INITIALIZED,toggle_menubar)
 
--- Toggle Tabs, default on
+-- Toggle Tabs
 local is_tabs = false
 local function toggle_tabs()
 	if not is_tabs then
-		ui.tabs = true
-	else
 		ui.tabs = false
+	else
+		ui.tabs = true
 	end
 	is_tabs = not is_tabs
 end
 keys['ctrl+f12'] = toggle_tabs
 -- no tabs on startup
-events.connect(events.INITIALIZED,toggle_tabs)
+--events.connect(events.INITIALIZED,toggle_tabs)
 
 -- insert CSS marker
 local function cssmrk()
@@ -294,7 +332,7 @@ local function is_blok_commnt()
 		local prfx1 = string.sub(sel_text, 1, opnBegIdx - 1)
 		local sufx1 = string.sub(sel_text, opnEndIdx + 1)
 		local blokStr = prfx1 .. sufx1
-		-- then remove close
+		-- remove close
 		local clsBegIdx, clsEndIdx = string.find(blokStr, "[*]/")
 		local prfx2 = string.sub(blokStr, 1, clsBegIdx - 1)
 		local sufx2 = string.sub(blokStr, clsEndIdx + 1)

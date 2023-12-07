@@ -18,17 +18,6 @@ add/remove block comment = ctrl+kp5
 toggle all = ctrl+esc
 ]]
 
-events.connect(events.VIEW_NEW,function()
-	-- has before "toggle_all()" or it does not work in "events.VIEW_NEW"
-	textadept.session.load(_USERHOME..'/session')
-	for i = 1, #arg do
-		local filename = lfs.abspath(arg[i], arg[-1])
-		if lfs.attributes(filename) then -- not a switch
-			io.open_file(filename)
-		end
-	end
-end)
-
 -- on start with split will cause all tabs to be split
 local index = 1;
 events.connect(events.QUIT,function()
@@ -300,12 +289,13 @@ end
 keys['ctrl+esc'] = toggle_all
 
 function updateState()
-	-- update buffer on state of...
+	-- update tabs on state of...
 	view.margin_width_n[1] = mWdt
 	view.v_scroll_bar = isScrollBar
 	view.h_scroll_bar = isScrollBar
 end
 events.connect(events.BUFFER_AFTER_SWITCH,updateState)
+events.connect(events.BUFFER_NEW,updateState)
 --events.connect(events.VIEW_AFTER_SWITCH,updateState)
 
 local once = false
@@ -404,4 +394,16 @@ events.connect(events.UPDATE_UI, function(updated)
   if buffer.filename then
 	ui.statusbar_text = buffer.filename .. "	" .. "block start: " .. line_text
   end
+end)
+
+events.connect(events.VIEW_NEW,function()
+	-- has before "toggle_all()" or it does not work in "events.VIEW_NEW"
+	textadept.session.load(_USERHOME..'/session')
+	for i = 1, #arg do
+		local filename = lfs.abspath(arg[i], arg[-1])
+		if lfs.attributes(filename) then -- not a switch
+			io.open_file(filename)
+			updateState()
+		end
+	end
 end)

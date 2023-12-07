@@ -15,7 +15,6 @@ insert CSS marker = ctrl+kp2
 insert comment marker = ctrl+kp1
 insert marker = ctrl+kp3
 add/remove block comment = ctrl+kp5
-toggle all = ctrl+esc
 ]]
 
 -- on start with split will cause all tabs to be split

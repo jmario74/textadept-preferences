@@ -15,6 +15,7 @@ insert CSS marker = ctrl+kp2
 insert comment marker = ctrl+kp1
 insert marker = ctrl+kp3
 add/remove block comment = ctrl+kp5
+toggle all = ctrl+esc
 ]]
 
 -- on start with split will cause all tabs to be split
@@ -219,35 +220,35 @@ end
 keys['ctrl+f8'] = toggle_autopairs
 
 -- Toggle scrollbars
-local isScroll = false
-local isScrollBar;
+local isScrollbars = false
+local scrolBarState;
 local function toggle_scrollbars()
-	if not isScroll then
-		isScrollBar = false
+	if not isScrollbars then
+		scrolBarState = false
 	else
-		isScrollBar = true
+		scrolBarState = true
 	end
 
-	view.v_scroll_bar = isScrollBar
-	view.h_scroll_bar = isScrollBar
+	view.v_scroll_bar = scrolBarState
+	view.h_scroll_bar = scrolBarState
 
-	isScroll = not isScroll
+	isScrollbars = not isScrollbars
 end
 keys['ctrl+f9'] = toggle_scrollbars
 
 -- Toggle line numbers
 local is_linenum = false
 local mWdtLst = {}
-local mWdt
+local mWdtState
 local function toggle_linenum()
 	if not is_linenum then
 		mWdtLst[1] = view.margin_width_n[1]
-		mWdt = 0
+		mWdtState = 0
 	else
 		view.margin_width_n[1] = mWdtLst[1]
-		mWdt = mWdtLst[1]
+		mWdtState = mWdtLst[1]
 	end
-	view.margin_width_n[1] = mWdt
+	view.margin_width_n[1] = mWdtState
 	is_linenum = not is_linenum
 end
 keys['ctrl+f10'] = toggle_linenum
@@ -277,21 +278,22 @@ local function toggle_menubar()
 	is_menubar = not is_menubar
 end
 keys['ctrl+f11'] = toggle_menubar
---events.connect(events.INITIALIZED,toggle_menubar)
+events.connect(events.INITIALIZED,toggle_menubar)
 
 function toggle_all()
 	toggle_linenum()-- execute first, has "reset()"
 	toggle_autoindent()
 	toggle_autopairs()
-	--toggle_tabs()
+	toggle_scrollbars()
+	toggle_tabs()
 end
 keys['ctrl+esc'] = toggle_all
 
 function updateState()
 	-- update tabs on state of...
-	view.margin_width_n[1] = mWdt
-	view.v_scroll_bar = isScrollBar
-	view.h_scroll_bar = isScrollBar
+	view.margin_width_n[1] = mWdtState
+	view.v_scroll_bar = scrolBarState
+	view.h_scroll_bar = scrolBarState
 end
 events.connect(events.BUFFER_AFTER_SWITCH,updateState)
 events.connect(events.BUFFER_NEW,updateState)
@@ -302,7 +304,6 @@ local once = false
 events.connect(events.VIEW_NEW,function()
 	if not once then
 		toggle_all()
-		toggle_scrollbars()
 		once = true
 	end
 end)

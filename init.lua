@@ -1,4 +1,4 @@
--- ONLY WORKS WITH GTK VERSION 11.4
+-- ONLY FOR GTK 11.4
 
 --[[
 Custom find marker = ctrl+kp4
@@ -15,7 +15,25 @@ insert CSS marker = ctrl+kp2
 insert comment marker = ctrl+kp1
 insert marker = ctrl+kp3
 add/remove block comment = ctrl+kp5
+toggle all = ctrl+esc
 ]]
+
+events.connect(events.VIEW_NEW,function()
+	-- has before "toggle_all()" or it does not work in "events.VIEW_NEW"
+	textadept.session.load(_USERHOME..'/session')
+	for i = 1, #arg do
+		local filename = lfs.abspath(arg[i], arg[-1])
+		if lfs.attributes(filename) then -- not a switch
+			io.open_file(filename)
+		end
+	end
+end)
+
+-- on start with split will cause all tabs to be split
+local index = 1;
+events.connect(events.QUIT,function()
+	view:unsplit()
+end,index)
 
 -- Some local colors (/themes/dark.lua)
 local white = 0xFFFFFF
@@ -140,6 +158,13 @@ textadept.editing.typeover_chars[string.byte(')')] = false
 -- remove trailing spaces on save
 textadept.editing.strip_trailing_spaces = true
 
+--[[ iterate table
+tbl = { 'one', 'two' }
+for _, s in pairs(tbl) do
+	val = s
+end
+]]
+
 -- Copy file path to clipboard
 local function copy_file_path()
 	ui.clipboard_text = buffer.filename
@@ -191,8 +216,6 @@ local function toggle_autoindent()
 	is_autoindent = not is_autoindent
 end
 keys['ctrl+f7'] = toggle_autoindent
--- No auto indent on startup
-events.connect(events.INITIALIZED,toggle_autoindent)
 
 -- Toggle auto pairs
 local is_autopairs = false
@@ -206,72 +229,52 @@ local function toggle_autopairs()
 	is_autopairs = not is_autopairs
 end
 keys['ctrl+f8'] = toggle_autopairs
--- No auto pairs on startup
-events.connect(events.INITIALIZED,toggle_autopairs)
 
 -- Toggle scrollbars
-local is_scrollbars = false
+local isScroll = false
+local isScrollBar;
 local function toggle_scrollbars()
-	if not is_scrollbars then
-		view.v_scroll_bar = false
-		view.h_scroll_bar = false
+	if not isScroll then
+		isScrollBar = false
 	else
-		view.v_scroll_bar = true
-		view.h_scroll_bar = true
+		isScrollBar = true
 	end
-	is_scrollbars = not is_scrollbars
+
+	view.v_scroll_bar = isScrollBar
+	view.h_scroll_bar = isScrollBar
+
+	isScroll = not isScroll
 end
 keys['ctrl+f9'] = toggle_scrollbars
--- Hide scrollbars on startup
-events.connect(events.INITIALIZED,toggle_scrollbars)
 
---[[ Toggle all margin width for all tabs
+-- Toggle line numbers
 local is_linenum = false
-local mWdtArr = {}
-function toggle_linenum()
+local mWdtLst = {}
+local mWdt
+local function toggle_linenum()
 	if not is_linenum then
-		for i = 1, view.margins do
-			mWdtArr[i] = view.margin_width_n[i]
-			view.margin_width_n[i] = 0
-		end
-		-- apply to all tabs
-		view.margins = 0
+		mWdtLst[1] = view.margin_width_n[1]
+		mWdt = 0
 	else
-		-- apply to all tabs, requires "reset()", all edit history will be lost
-		view.margins = 5
-
-		for i = 1, view.margins do
-			view.margin_width_n[i] = mWdtArr[i]
-		end
-
-		reset()
+		view.margin_width_n[1] = mWdtLst[1]
+		mWdt = mWdtLst[1]
 	end
+	view.margin_width_n[1] = mWdt
 	is_linenum = not is_linenum
 end
 keys['ctrl+f10'] = toggle_linenum
--- no line numbers on startup, "events.INITIALIZED" neutralizes key bind
-events.connect(events.BUFFER_NEW, toggle_linenum)
-events.connect(events.FILE_OPENED, toggle_linenum)
-]]
 
--- Toggle line numbers only for this tab
-local is_linenum = false
-local mWdtArr = {}
-function toggle_linenum()
-	if not is_linenum then
-		for i = 1, view.margins do
-			mWdtArr[i] = view.margin_width_n[i]
-		end
-		view.margin_width_n[1] = 0
+-- Toggle Tabs
+local is_tabs = false
+local function toggle_tabs()
+	if not is_tabs then
+		ui.tabs = false
 	else
-		view.margin_width_n[1] = mWdtArr[1]
+		ui.tabs = true
 	end
-	is_linenum = not is_linenum
+	is_tabs = not is_tabs
 end
-keys['ctrl+f10'] = toggle_linenum
--- no line numbers on startup, "events.INITIALIZED" neutralizes key bind
-events.connect(events.BUFFER_NEW, toggle_linenum)
-events.connect(events.FILE_OPENED, toggle_linenum)
+keys['ctrl+f12'] = toggle_tabs
 
 -- Toggle Menubar
 local is_menubar = false
@@ -286,22 +289,38 @@ local function toggle_menubar()
 	is_menubar = not is_menubar
 end
 keys['ctrl+f11'] = toggle_menubar
--- no menubar on startup
-events.connect(events.INITIALIZED,toggle_menubar)
+--events.connect(events.INITIALIZED,toggle_menubar)
 
--- Toggle Tabs
-local is_tabs = false
-local function toggle_tabs()
-	if not is_tabs then
-		ui.tabs = false
-	else
-		ui.tabs = true
-	end
-	is_tabs = not is_tabs
+function toggle_all()
+	toggle_linenum()-- execute first, has "reset()"
+	toggle_autoindent()
+	toggle_autopairs()
+	--toggle_tabs()
 end
-keys['ctrl+f12'] = toggle_tabs
--- no tabs on startup
---events.connect(events.INITIALIZED,toggle_tabs)
+keys['ctrl+esc'] = toggle_all
+
+function updateState()
+	-- update buffer on state of...
+	view.margin_width_n[1] = mWdt
+	view.v_scroll_bar = isScrollBar
+	view.h_scroll_bar = isScrollBar
+end
+events.connect(events.BUFFER_AFTER_SWITCH,updateState)
+--events.connect(events.VIEW_AFTER_SWITCH,updateState)
+
+local once = false
+events.connect(events.VIEW_NEW,function()
+	if not once then
+		toggle_all()
+		toggle_scrollbars()
+		once = true
+	end
+end)
+
+events.connect(events.RESET_AFTER,function()
+	toggle_autopairs()
+	once = true
+end)
 
 -- insert CSS marker
 local function cssmrk()
@@ -382,5 +401,7 @@ events.connect(events.UPDATE_UI, function(updated)
   if line_text == '/*' then return end
   if line_text == '/**' then return end
 
-  ui.statusbar_text = buffer.filename .. "	" .. "block start: " .. line_text
+  if buffer.filename then
+	ui.statusbar_text = buffer.filename .. "	" .. "block start: " .. line_text
+  end
 end)

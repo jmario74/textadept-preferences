@@ -237,11 +237,11 @@ end
 keys['ctrl+f9'] = toggle_scrollbars
 
 -- Toggle line numbers
-local is_linenum = false
+local isLinenum = false
 local mWdtLst = {}
 local mWdtState
 local function toggle_linenum()
-	if not is_linenum then
+	if not isLinenum then
 		mWdtLst[1] = view.margin_width_n[1]
 		mWdtState = 0
 	else
@@ -249,39 +249,39 @@ local function toggle_linenum()
 		mWdtState = mWdtLst[1]
 	end
 	view.margin_width_n[1] = mWdtState
-	is_linenum = not is_linenum
+	isLinenum = not isLinenum
 end
 keys['ctrl+f10'] = toggle_linenum
 
 -- Toggle Tabs
-local is_tabs = false
+local isTabs = false
 local function toggle_tabs()
-	if not is_tabs then
+	if not isTabs then
 		ui.tabs = false
 	else
 		ui.tabs = true
 	end
-	is_tabs = not is_tabs
+	is_tabs = not isTabs
 end
 keys['ctrl+f12'] = toggle_tabs
 
 -- Toggle Menubar
-local is_menubar = false
+local isMenubar = false
 local menubar = textadept.menu.menubar
 --keys['ctrl+f11'] = function()
 local function toggle_menubar()
-	if not is_menubar then
+	if not isMenubar then
 		textadept.menu.menubar = nil
 	else
 		textadept.menu.menubar = menubar
 	end
-	is_menubar = not is_menubar
+	isMenubar = not isMenubar
 end
 keys['ctrl+f11'] = toggle_menubar
 events.connect(events.INITIALIZED,toggle_menubar)
 
 function toggle_all()
-	toggle_linenum()-- execute first, has "reset()"
+	toggle_linenum()
 	toggle_autoindent()
 	toggle_autopairs()
 	toggle_scrollbars()
@@ -332,7 +332,7 @@ end
 keys['ctrl+kp3'] = mrk
 
 -- add/remove block comment
-local function is_blok_commnt()
+local function blok_commnt()
 	-- get selected text
 	local sel_text = buffer.get_sel_text()
 	-- only if or not block comment
@@ -351,7 +351,7 @@ local function is_blok_commnt()
 		buffer.replace_sel(prfx2 .. sufx2)
 	end
 end
-keys['ctrl+kp5'] = is_blok_commnt
+keys['ctrl+kp5'] = blok_commnt
 
 -- thank you to Eric Anderson for his show & tell of this code
 -- show opening block in status bar, closing block must not have space before it

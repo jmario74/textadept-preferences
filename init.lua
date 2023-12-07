@@ -296,6 +296,7 @@ function updateState()
 end
 events.connect(events.BUFFER_AFTER_SWITCH,updateState)
 events.connect(events.BUFFER_NEW,updateState)
+events.connect(events.FILE_OPENED,updateState)
 --events.connect(events.VIEW_AFTER_SWITCH,updateState)
 
 local once = false

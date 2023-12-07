@@ -37,7 +37,7 @@ local orange = 0x4D99E6
 
 -- Adjust the default theme's font and size.
 if not CURSES then
-  view:set_theme('dark', {font = 'DejaVu Sans Mono', size = 13})
+  view:set_theme('dark', {font = 'DejaVu Sans Mono', size = 15})
 end
 
 -- Display file path in status bar if OS is set to hide title bar of apps
@@ -306,11 +306,6 @@ events.connect(events.VIEW_NEW,function()
 		toggle_all()
 		once = true
 	end
-end)
-
-events.connect(events.RESET_AFTER,function()
-	toggle_autopairs()
-	once = true
 end)
 
 -- insert CSS marker

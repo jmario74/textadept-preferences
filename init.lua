@@ -37,7 +37,7 @@ local orange = 0x4D99E6
 
 -- Adjust the default theme's font and size.
 if not CURSES then
-  view:set_theme('dark', {font = 'DejaVu Sans Mono', size = 15})
+  view:set_theme('dark', {font = 'DejaVu Sans Mono', size = 13})
 end
 
 -- Display file path in status bar if OS is set to hide title bar of apps
@@ -238,17 +238,26 @@ keys['ctrl+f9'] = toggle_scrollbars
 
 -- Toggle line numbers
 local isLinenum = false
-local mWdtLst = {}
-local mWdtState
+local mWdt = {}
+local mWdtState = {}
+local isFld = false
 local function toggle_linenum()
 	if not isLinenum then
-		mWdtLst[1] = view.margin_width_n[1]
-		mWdtState = 0
+		for i=1,view.margins do
+			mWdt[i] = view.margin_width_n[i]
+			mWdtState[i] = 0
+		end
 	else
-		view.margin_width_n[1] = mWdtLst[1]
-		mWdtState = mWdtLst[1]
+		for i=1,view.margins do
+			mWdtState[i] = mWdt[i]
+		end
 	end
-	view.margin_width_n[1] = mWdtState
+	for i=1,view.margins do
+		view.margin_width_n[i] = mWdtState[i]
+	end
+	if view.size ~= nil then
+		view.margin_width_n[3] = mWdt[3]
+	end
 	isLinenum = not isLinenum
 end
 keys['ctrl+f10'] = toggle_linenum
@@ -261,7 +270,7 @@ local function toggle_tabs()
 	else
 		ui.tabs = true
 	end
-	is_tabs = not isTabs
+	isTabs = not isTabs
 end
 keys['ctrl+f12'] = toggle_tabs
 
@@ -291,14 +300,20 @@ keys['ctrl+esc'] = toggle_all
 
 function updateState()
 	-- update tabs on state of...
-	view.margin_width_n[1] = mWdtState
+	for i=1,view.margins do
+		view.margin_width_n[i] = mWdtState[i]
+	end
 	view.v_scroll_bar = scrolBarState
 	view.h_scroll_bar = scrolBarState
+	if view.size ~= nil then
+		view.margin_width_n[3] = mWdt[3]
+	end
 end
 events.connect(events.BUFFER_AFTER_SWITCH,updateState)
 events.connect(events.BUFFER_NEW,updateState)
 events.connect(events.FILE_OPENED,updateState)
 --events.connect(events.VIEW_AFTER_SWITCH,updateState)
+events.connect(events.FOCUS,updateState)
 
 local once = false
 events.connect(events.VIEW_NEW,function()

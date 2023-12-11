@@ -154,6 +154,10 @@ for _, s in pairs(tbl) do
 end
 ]]
 
+--[[ destructuring assignment/unpacking
+local a, b = tbl
+]]
+
 -- Copy file path to clipboard
 local function copy_file_path()
 	ui.clipboard_text = buffer.filename
@@ -312,8 +316,9 @@ end
 events.connect(events.BUFFER_AFTER_SWITCH,updateState)
 events.connect(events.BUFFER_NEW,updateState)
 events.connect(events.FILE_OPENED,updateState)
---events.connect(events.VIEW_AFTER_SWITCH,updateState)
 events.connect(events.FOCUS,updateState)
+events.connect(events.UPDATE_UI,updateState)
+--events.connect(events.VIEW_AFTER_SWITCH,updateState)
 
 local once = false
 events.connect(events.VIEW_NEW,function()
@@ -408,7 +413,6 @@ events.connect(events.UPDATE_UI, function(updated)
 end)
 
 events.connect(events.VIEW_NEW,function()
-	-- has before "toggle_all()" or it does not work in "events.VIEW_NEW"
 	textadept.session.load(_USERHOME..'/session')
 	for i = 1, #arg do
 		local filename = lfs.abspath(arg[i], arg[-1])
